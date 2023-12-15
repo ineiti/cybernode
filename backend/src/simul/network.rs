@@ -10,7 +10,7 @@ use tracing::{debug, error};
 use super::node::{Node, NodeMsg};
 
 pub struct Network {
-    nodes: HashMap<U256, Box<dyn Node>>,
+    nodes: HashMap<U256, Node>,
 }
 
 impl Network {
@@ -23,12 +23,12 @@ impl Network {
     pub fn tick(&mut self, now: u64) {
         let mut msgs = vec![];
         for node in self.nodes.iter_mut() {
-            msgs.append(&mut node.1.tick(now));
+            // msgs.append(&mut node.1.tick(now));
         }
         self.process_msgs(msgs);
     }
 
-    pub fn node_add(&mut self, id: &U256, n: Box<dyn Node>) {
+    pub fn node_add(&mut self, id: &U256, n: Node) {
         self.nodes.insert(*id, n);
     }
 
@@ -49,7 +49,7 @@ impl Network {
     // be dropped.
     fn send_msg(&mut self, msg: NodeMsg) -> Vec<NodeMsg> {
         if let Some(node) = self.nodes.get_mut(&msg.to) {
-            return node.receive(msg);
+            // return node.receive(msg);
         }
         vec![]
     }

@@ -1,9 +1,6 @@
 pub mod broker;
 pub mod network;
 pub mod node;
-pub mod node_basic;
-pub mod node_flex;
-pub mod node_web;
 pub mod msgs;
 pub mod simulator;
 pub mod trusted;
