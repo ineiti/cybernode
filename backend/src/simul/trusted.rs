@@ -171,19 +171,19 @@ pub struct NodeInfo {
     pub mana: U256,
 }
 
+impl NodeInfo {
+    pub fn random() -> Self {
+        Self {
+            id: rand::random::<[u8; 32]>().into(),
+            last_seen: 0,
+            mana: U256::zero(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
-
-    impl NodeInfo {
-        fn random() -> Self {
-            Self {
-                id: rand::random::<[u8; 32]>().into(),
-                last_seen: 0,
-                mana: U256::zero(),
-            }
-        }
-    }
 
     type ResErr = Result<(), Box<dyn Error>>;
 
