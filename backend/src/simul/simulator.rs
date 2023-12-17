@@ -3,10 +3,7 @@ use std::error::Error;
 use primitive_types::U256;
 use rand::random;
 
-use super::{
-    broker::{BrokerAction, Module},
-    node::Node,
-};
+use super::broker::{BrokerAction, Module};
 
 pub struct Simulator {
     nodes: Vec<NodeFlex>,
@@ -112,8 +109,9 @@ mod test {
     #[test]
     fn test_online() -> Result<(), Box<dyn Error>> {
         let cfg = Config::default();
-        let ids = (0..cfg.nodes_root + cfg.nodes_flex).map(|_| 
-            rand::random::<[u8; 32]>().into()).collect();
+        let ids = (0..cfg.nodes_root + cfg.nodes_flex)
+            .map(|_| rand::random::<[u8; 32]>().into())
+            .collect();
         let mut simul = Simulator::new(cfg.clone(), ids)?;
         assert_eq!(0, simul.nodes_online());
 

@@ -86,6 +86,9 @@ impl Trusted {
                         msg.send(TrustedReply::OK);
                     }
                     TReqMsg::Alive(id) => msg.send(self.alive(id)),
+                    TReqMsg::Info(id) => msg.send(TrustedReply::NodeInfo(
+                        self.nodes.get(id).map(|n| n.clone()),
+                    )),
                 },
                 Err(e) => {
                     info!("Trusted listener closed with error: {e}");
@@ -153,12 +156,14 @@ pub enum TReqMsg {
     Register(NodeInfo),
     Alive(U256),
     Tick(u64),
+    Info(U256),
     Close,
 }
 
 #[derive(Debug)]
 pub enum TrustedReply {
     NodeList(Vec<NodeInfo>),
+    NodeInfo(Option<NodeInfo>),
     Mana(U256),
     OK,
     ErrorMsg(String),
