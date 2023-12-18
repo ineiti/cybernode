@@ -258,6 +258,7 @@ dependencies = [
  "actix-web",
  "assert_matches",
  "byte-slice-cast",
+ "derive_more",
  "primitive-types",
  "rand",
  "ring",

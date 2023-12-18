@@ -15,3 +15,4 @@ tracing = "0.1.40"
 assert_matches = "1.5.0"
 ring = {version = "0.17.7", features = ["std"] }
 byte-slice-cast = "1.2.2"
+derive_more = "0.99.17"

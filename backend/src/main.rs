@@ -8,11 +8,12 @@ use std::{
     thread,
 };
 
-use actix_web::{get, middleware, web, App, HttpResponse, HttpServer, Result};
+use actix_web::{get, middleware, web, App, HttpResponse, HttpServer, Result, error, http::{header::ContentType, StatusCode}};
 use backend::{
     api::stats::StatsReply,
     simul::{broker::Broker, trusted::NodeInfo},
 };
+use derive_more::{Display, Error};
 use primitive_types::U256;
 use tracing::error;
 
@@ -62,12 +63,12 @@ impl Main {
 
     async fn register(state: web::Data<Main>) -> Result<HttpResponse> {
         let (tx, rx) = channel();
-        match state.tx.send(FromWeb::Register(tx, U256::zero())) {
-            Ok(_) => Ok(HttpResponse::Ok()
-                .content_type("text/plain")
-                .body(format!("Stats"))),
-            Err(_) => todo!(),
-        }
+        state
+            .tx
+            .send(FromWeb::Register(tx, U256::zero()))
+            .map_err(|_| UserError::InternalError)?;
+        let ni = rx.recv().map_err(|_| UserError::InternalError)?;
+        Ok(HttpResponse::Ok().json(ni))
     }
 }
 
@@ -77,6 +78,26 @@ enum FromWeb {
 }
 
 enum ToWeb {}
+
+#[derive(Debug, Display, Error)]
+enum UserError {
+    #[display(fmt = "An internal error occurred. Please try again later.")]
+    InternalError,
+}
+
+impl error::ResponseError for UserError {
+    fn error_response(&self) -> HttpResponse {
+        HttpResponse::build(self.status_code())
+            .insert_header(ContentType::html())
+            .body(self.to_string())
+    }
+
+    fn status_code(&self) -> StatusCode {
+        match *self {
+            UserError::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+}
 
 #[actix_web::main] // or #[tokio::main]
 async fn main() -> std::io::Result<()> {

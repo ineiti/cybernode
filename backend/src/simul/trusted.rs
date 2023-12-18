@@ -6,6 +6,7 @@ use std::{
 };
 
 use primitive_types::U256;
+use serde::Serialize;
 use tracing::{debug, error, info};
 
 /// Trusted is a blockchain simulation.
@@ -169,7 +170,7 @@ pub enum TrustedReply {
     ErrorMsg(String),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 pub struct NodeInfo {
     pub id: U256,
     pub last_seen: u64,
