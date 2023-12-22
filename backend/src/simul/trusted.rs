@@ -1,7 +1,7 @@
 use std::{
     collections::HashMap,
     error::Error,
-    sync::mpsc::{self, Receiver, Sender},
+    sync::mpsc::{self, channel, Receiver, Sender},
     thread,
 };
 
@@ -75,8 +75,9 @@ impl Trusted {
             match self.ch_request_rx.recv() {
                 Ok(msg) => match &msg.message {
                     TReqMsg::Register(ni) => {
+                        println!("Registering id {:?} with info {ni:?}", ni.id);
                         self.nodes.insert(ni.id, ni.clone());
-                        msg.send(TrustedReply::NodeList(self.get_node_list()));
+                        msg.reply(TrustedReply::NodeList(self.get_node_list()));
                     }
                     TReqMsg::Close => {
                         debug!("Closing Trusted");
@@ -84,12 +85,15 @@ impl Trusted {
                     }
                     TReqMsg::Tick(now) => {
                         self.tick(now);
-                        msg.send(TrustedReply::OK);
+                        msg.reply(TrustedReply::OK);
                     }
-                    TReqMsg::Alive(id) => msg.send(self.alive(id)),
-                    TReqMsg::Info(id) => msg.send(TrustedReply::NodeInfo(
-                        self.nodes.get(id).map(|n| n.clone()),
-                    )),
+                    TReqMsg::Alive(id) => msg.reply(self.alive(id)),
+                    TReqMsg::Info(id) => {
+                        println!("Got asked for node {id:x?}");
+                        msg.reply(TrustedReply::NodeInfo(
+                            self.nodes.get(id).map(|n| n.clone()),
+                        ))
+                    }
                 },
                 Err(e) => {
                     info!("Trusted listener closed with error: {e}");
@@ -145,20 +149,32 @@ pub struct TrustedRequest {
 }
 
 impl TrustedRequest {
-    fn send(&self, reply: TrustedReply) {
+    fn reply(&self, reply: TrustedReply) {
         if let Err(e) = self.reply.send(reply) {
             error!("While sending reply: {e}");
         }
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum TReqMsg {
     Register(NodeInfo),
     Alive(U256),
     Tick(u64),
     Info(U256),
     Close,
+}
+
+impl TReqMsg {
+    pub fn send(&self, trusted: &Sender<TrustedRequest>) -> Result<TrustedReply, Box<dyn Error>> {
+        let (tx, rx) = channel();
+        trusted.send(TrustedRequest {
+            message: self.clone(),
+            reply: tx,
+        })?;
+
+        Ok(rx.recv()?)
+    }
 }
 
 #[derive(Debug)]

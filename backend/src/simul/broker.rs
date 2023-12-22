@@ -57,11 +57,11 @@ impl Broker {
         let nodes: Vec<Node> = (0..sim.nodes_root + sim.nodes_flex)
             .map(|_| Node::new(&trusted, false))
             .collect();
-        let node_ids = nodes.iter().map(|n| n.id).collect();
+        let node_ids = nodes.iter().map(|n| n.id()).collect();
         Ok(Self {
             simulator: Box::new(Simulator::new(sim, node_ids)?),
             network: Box::new(Network::new()),
-            web: Box::new(Web::new()),
+            web: Box::new(Web::new(trusted.clone())),
             trusted,
         })
     }
@@ -89,12 +89,8 @@ impl Broker {
 
     /// Returns the NodeInfo for this given id.
     pub fn get_node_info(&mut self, id: U256) -> Result<NodeInfo, Box<dyn Error>> {
-        let (tx, rx) = channel();
-        self.trusted.send(TrustedRequest {
-            message: trusted::TReqMsg::Info(id),
-            reply: tx,
-        })?;
-        if let TrustedReply::NodeInfo(Some(ni)) = rx.recv()? {
+        let reply = trusted::TReqMsg::Info(id).send(&self.trusted)?;
+        if let TrustedReply::NodeInfo(Some(ni)) = reply {
             return Ok(ni);
         }
         Err("No NodeInfo for this node available.".into())
