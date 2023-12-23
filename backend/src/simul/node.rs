@@ -1,5 +1,6 @@
 use byte_slice_cast::*;
-use std::sync::mpsc::Sender;
+use serde::Serialize;
+use std::{fmt::Display, sync::mpsc::Sender};
 
 use primitive_types::U256;
 use ring::digest;
@@ -7,7 +8,7 @@ use tracing::{debug, error, info};
 
 use super::{
     broker::{BrokerAction, Module},
-    trusted::{NodeInfo, TReqMsg, TrustedRequest},
+    trusted::{TReqMsg, TrustedRequest},
 };
 
 /// Node is a simulation which can answer to certain messages.
@@ -57,13 +58,17 @@ impl Node {
         self.info.id
     }
 
+    pub fn info(&self) -> NodeInfo {
+        self.info.clone()
+    }
+
     fn update_trusted(&self) {
         if let Err(e) = TReqMsg::Register(self.info.clone()).send(&self.trusted) {
             error!("While registering node: {e:?}");
         }
     }
 
-    fn receive(&mut self, input: NodeMsg) -> Vec<NodeMsg> {
+    pub fn receive(&mut self, input: NodeMsg) -> Vec<NodeMsg> {
         let mut out = vec![];
         if self.online {
             debug!("Processing message {input:?}");
@@ -100,14 +105,58 @@ impl Module for Node {
     }
 
     fn action(&mut self, task: BrokerAction) -> Vec<BrokerAction> {
-        todo!()
+        match task {
+            BrokerAction::NodeOnline(_, _) => todo!(),
+            BrokerAction::NodeStatus(_, _) => todo!(),
+            BrokerAction::NodeAction(_) => todo!(),
+            BrokerAction::NodeMessage(_) => todo!(),
+            BrokerAction::NodeAdd(_) => todo!(),
+            BrokerAction::WebRegister(_) => todo!(),
+        }
+    }
+}
+
+#[derive(Clone, Serialize)]
+pub struct NodeInfo {
+    pub id: U256,
+    pub last_seen: u64,
+    pub mana: U256,
+}
+
+impl NodeInfo {
+    pub fn random() -> Self {
+        Self {
+            id: rand::random::<[u8; 32]>().into(),
+            last_seen: 0,
+            mana: U256::zero(),
+        }
+    }
+}
+
+impl Display for NodeInfo {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            formatter,
+            "{:#018x}: mana={}, last_seen={}",
+            self.id.as_ref()[0],
+            self.mana,
+            self.last_seen
+        )
+    }
+}
+
+impl std::fmt::Debug for NodeInfo {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            formatter,
+            "{:#034x}: mana={}, last_seen={}",
+            self.id, self.mana, self.last_seen
+        )
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::simul::trusted::{Config, Trusted};
-
     use super::*;
 
     #[test]

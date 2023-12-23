@@ -8,11 +8,12 @@ use std::{
     thread,
 };
 
-use actix_web::{get, middleware, web, App, HttpResponse, HttpServer, Result, error, http::{header::ContentType, StatusCode}};
-use backend::{
-    api::stats::StatsReply,
-    simul::{broker::Broker, trusted::NodeInfo},
+use actix_web::{
+    error, get,
+    http::{header::ContentType, StatusCode},
+    middleware, web, App, HttpResponse, HttpServer, Result,
 };
+use backend::{api::stats::StatsReply, simul::{broker::Broker, node::NodeInfo}};
 use derive_more::{Display, Error};
 use primitive_types::U256;
 use tracing::error;
@@ -38,7 +39,6 @@ impl Main {
             let mut broker = Broker::default().expect("Couldn't start broker");
             match rx.recv() {
                 Ok(msg) => match msg {
-                    FromWeb::Nop => todo!(),
                     FromWeb::Register(tx, secret) => {
                         let id = broker.register(secret);
                         let ni = broker.get_node_info(id).unwrap();
@@ -74,10 +74,9 @@ impl Main {
 
 enum FromWeb {
     Register(Sender<NodeInfo>, U256),
-    Nop,
 }
 
-enum ToWeb {}
+// enum ToWeb {}
 
 #[derive(Debug, Display, Error)]
 enum UserError {

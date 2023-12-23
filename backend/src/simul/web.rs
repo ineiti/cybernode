@@ -1,8 +1,8 @@
 use std::sync::mpsc::Sender;
 
-use tracing::error;
+use tracing::{debug, error, trace};
 
-use crate::simul::{node::Node, trusted::{TReqMsg, NodeInfo}};
+use crate::simul::{node::{Node, NodeInfo}, trusted::TReqMsg};
 
 use super::{
     broker::{BrokerAction, Module},
@@ -26,10 +26,14 @@ impl Module for Web {
                 let id = Node::secret_to_id(secret);
                 match TReqMsg::Info(id).send(&self.trusted) {
                     Ok(reply) => {
-                        println!("Reply is: {reply:?}");
                         if let TrustedReply::NodeInfo(info_op) = reply {
-                            let info = info_op.unwrap_or_else(||{
-                                NodeInfo::random()
+                            let info = info_op.unwrap_or_else(|| {
+                                debug!("Creating new node with id {id:#034x}");
+                                NodeInfo {
+                                    id,
+                                    last_seen: 0,
+                                    mana: 0.into(),
+                                }
                             });
                             return vec![BrokerAction::NodeAdd(Node::from_info(
                                 info,
@@ -49,6 +53,7 @@ impl Module for Web {
     }
 
     fn tick(&mut self, time: u64) -> Vec<super::broker::BrokerAction> {
-        todo!()
+        trace!("Tick @ {time}");
+        vec![]
     }
 }

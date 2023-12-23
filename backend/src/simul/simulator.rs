@@ -75,10 +75,17 @@ impl Simulator {
 
 impl Module for Simulator {
     fn action(&mut self, action: BrokerAction) -> Vec<super::broker::BrokerAction> {
-        todo!()
+        match action{
+            BrokerAction::NodeOnline(_, _) => todo!(),
+            BrokerAction::NodeStatus(_, _) => todo!(),
+            BrokerAction::NodeAction(_) => todo!(),
+            BrokerAction::NodeMessage(_) => todo!(),
+            BrokerAction::NodeAdd(_) => todo!(),
+            BrokerAction::WebRegister(_) => todo!(),
+        }
     }
 
-    fn tick(&mut self, time: u64) -> Vec<super::broker::BrokerAction> {
+    fn tick(&mut self, _time: u64) -> Vec<super::broker::BrokerAction> {
         let mut answer = vec![];
 
         for node in &mut self.nodes {

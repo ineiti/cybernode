@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use primitive_types::U256;
-use tracing::debug;
+use tracing::{debug, trace};
 
 use super::{
     broker::{BrokerAction, Module},
@@ -35,6 +35,7 @@ impl Network {
     // be dropped.
     fn send_msg(&mut self, msg: NodeMsg) -> Vec<NodeMsg> {
         if let Some(node) = self.nodes.get_mut(&msg.to) {
+            trace!("Got node {}", node.info());
             // return node.receive(msg);
         }
         vec![]
@@ -43,13 +44,24 @@ impl Network {
 
 impl Module for Network {
     fn action(&mut self, action: BrokerAction) -> Vec<BrokerAction> {
-        todo!()
+        match action {
+            BrokerAction::NodeAdd(n) => {
+                if !self.nodes.contains_key(&n.id()) {
+                    debug!("Adding node {}", n.info());
+                    self.nodes.insert(n.id(), n);
+                } else {
+                    debug!("Node already present: {}", n.info());
+                }
+            }
+            _ => {}
+        }
+        vec![]
     }
 
     fn tick(&mut self, now: u64) -> Vec<BrokerAction> {
         let mut msgs = vec![];
-        for node in self.nodes.iter_mut() {
-            msgs.append(&mut node.1.tick(now));
+        for node in self.nodes.values_mut() {
+            msgs.append(&mut node.tick(now));
         }
         self.process_msgs(msgs);
 

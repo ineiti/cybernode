@@ -2,12 +2,13 @@ use std::{
     collections::HashMap,
     error::Error,
     sync::mpsc::{self, channel, Receiver, Sender},
-    thread,
+    thread, 
 };
 
 use primitive_types::U256;
-use serde::Serialize;
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, warn, trace};
+
+use super::node::NodeInfo;
 
 /// Trusted is a blockchain simulation.
 /// In the simulation it replaces a central server with global knowledge.
@@ -75,12 +76,12 @@ impl Trusted {
             match self.ch_request_rx.recv() {
                 Ok(msg) => match &msg.message {
                     TReqMsg::Register(ni) => {
-                        println!("Registering id {:?} with info {ni:?}", ni.id);
+                        debug!("Registering node {ni}");
                         self.nodes.insert(ni.id, ni.clone());
                         msg.reply(TrustedReply::NodeList(self.get_node_list()));
                     }
                     TReqMsg::Close => {
-                        debug!("Closing Trusted");
+                        warn!("Closing Trusted");
                         return;
                     }
                     TReqMsg::Tick(now) => {
@@ -89,7 +90,7 @@ impl Trusted {
                     }
                     TReqMsg::Alive(id) => msg.reply(self.alive(id)),
                     TReqMsg::Info(id) => {
-                        println!("Got asked for node {id:x?}");
+                        trace!("Got asked for node {id:#34x}");
                         msg.reply(TrustedReply::NodeInfo(
                             self.nodes.get(id).map(|n| n.clone()),
                         ))
@@ -184,23 +185,6 @@ pub enum TrustedReply {
     Mana(U256),
     OK,
     ErrorMsg(String),
-}
-
-#[derive(Clone, Debug, Serialize)]
-pub struct NodeInfo {
-    pub id: U256,
-    pub last_seen: u64,
-    pub mana: U256,
-}
-
-impl NodeInfo {
-    pub fn random() -> Self {
-        Self {
-            id: rand::random::<[u8; 32]>().into(),
-            last_seen: 0,
-            mana: U256::zero(),
-        }
-    }
 }
 
 #[cfg(test)]

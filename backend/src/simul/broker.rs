@@ -2,22 +2,19 @@
 // the other hand it communicates with the network, simulation, and web
 // module.
 
-use std::{
-    error::Error,
-    sync::mpsc::{channel, Sender},
-};
+use std::{error::Error, sync::mpsc::Sender};
 
 use primitive_types::U256;
-use tracing::warn;
+use tracing::{info, warn};
 
 use crate::simul::trusted::TrustedReply;
 
 use super::{
     msgs::NodeAction,
     network::Network,
-    node::{Node, NodeMsg},
+    node::{Node, NodeMsg, NodeInfo},
     simulator::{self, Simulator},
-    trusted::{self, NodeInfo, Trusted, TrustedRequest},
+    trusted::{self, Trusted, TrustedRequest},
     web::Web,
 };
 
@@ -83,6 +80,7 @@ impl Broker {
     /// Registers the given node identified by the secret.
     /// It returns the corresponding node-id.
     pub fn register(&mut self, secret: U256) -> U256 {
+        info!("register");
         self.action_web(BrokerAction::WebRegister(secret));
         Node::secret_to_id(secret)
     }
