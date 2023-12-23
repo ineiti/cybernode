@@ -1,12 +1,18 @@
-use std::error::Error;
+use std::{error::Error, sync::mpsc::Sender};
 
 use primitive_types::U256;
 use rand::random;
+use tracing::error;
 
-use super::broker::{BMSimul, BrokerMsg, BMNet};
+use super::{
+    broker::{BMNet, BMSimul, BrokerMsg},
+    node::Node,
+    trusted::{TReqMsg, TrustedReply, TrustedRequest},
+};
 
 pub struct Simulator {
     nodes: Vec<NodeFlex>,
+    trusted: Sender<TrustedRequest>,
 }
 
 pub struct NodeFlex {
@@ -41,12 +47,17 @@ impl Config {
 
 impl Simulator {
     /// TODO: probably this'll need a Trusted tx-channel later on.
-    pub fn new(config: Config, nodes: Vec<U256>) -> Result<Self, Box<dyn Error>> {
+    pub fn new(
+        config: Config,
+        nodes: Vec<U256>,
+        trusted: Sender<TrustedRequest>,
+    ) -> Result<Self, Box<dyn Error>> {
         if nodes.len() != config.nodes_root + config.nodes_flex {
             return Err("wrong number of nodes".into());
         }
         Ok(Self {
             nodes: Self::node_flex(config, nodes),
+            trusted,
         })
     }
 
@@ -73,8 +84,7 @@ impl Simulator {
     }
 
     pub fn action(&mut self, action: BMSimul) -> Vec<BrokerMsg> {
-        match action{
-        }
+        match action {}
     }
 
     pub fn tick(&mut self, _time: u64) -> Vec<BrokerMsg> {
@@ -83,10 +93,17 @@ impl Simulator {
         for node in &mut self.nodes {
             if node.online && node.p_sign_out > 0 && node.p_sign_out > random::<u16>() {
                 node.online = false;
-                answer.push(BMNet::NodeOnline(node.id, false).into());
+                answer.push(BMNet::NodeDel(node.id).into());
             } else if node.online == false && node.p_sign_in > random::<u16>() {
                 node.online = true;
-                answer.push(BMNet::NodeOnline(node.id, true).into());
+                match TReqMsg::Info(node.id).send(&self.trusted) {
+                    Ok(reply) => {
+                        if let TrustedReply::NodeInfo(Some(ni)) = reply {
+                            answer.push(BMNet::NodeAdd(Node::from_info(ni, &self.trusted)).into());
+                        }
+                    }
+                    Err(_) => error!("Didn't find node {:?}", node.id),
+                }
             }
         }
         answer
@@ -96,8 +113,10 @@ impl Simulator {
 #[cfg(test)]
 mod test {
     use std::cmp::{max, min};
+    use test_log::test;
 
     use super::*;
+    use crate::simul::trusted::Trusted;
 
     impl Simulator {
         fn nodes_online(&self) -> usize {
@@ -111,7 +130,8 @@ mod test {
         let ids = (0..cfg.nodes_root + cfg.nodes_flex)
             .map(|_| rand::random::<[u8; 32]>().into())
             .collect();
-        let mut simul = Simulator::new(cfg.clone(), ids)?;
+        let trusted = Trusted::new_default();
+        let mut simul = Simulator::new(cfg.clone(), ids, trusted)?;
         assert_eq!(0, simul.nodes_online());
 
         // Make sure that the number of nodes fluctuates somehow.

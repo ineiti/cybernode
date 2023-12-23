@@ -25,7 +25,6 @@ This part should later on be replaced by the actual `fledger`-nodes.
 
 ## Small
 
-- remove `online` field from `Node` - they should be added / removed using the `Trusted`
 - Increase / decrease mana with every tick
 
 ## Medium
@@ -41,3 +40,4 @@ This part should later on be replaced by the actual `fledger`-nodes.
 
 2023-12-23
 - Add names to nodes
+- remove `online` field from `Node` - they should be added / removed using the `Trusted`

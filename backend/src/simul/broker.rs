@@ -12,7 +12,7 @@ use crate::simul::trusted::TrustedReply;
 use super::{
     msgs::NodeAction,
     network::Network,
-    node::{Node, NodeInfo, NodeMsg},
+    node::{Node, NodeInfo},
     simulator::{self, Simulator},
     trusted::{self, Trusted, TrustedRequest},
     web::Web,
@@ -35,11 +35,9 @@ pub enum BrokerMsg {
 
 #[derive(Debug)]
 pub enum BMNet {
-    NodeOnline(U256, bool),
-    NodeStatus(U256, bool),
     NodeAction(NodeAction),
-    NodeMessage(NodeMsg),
     NodeAdd(Node),
+    NodeDel(U256),
 }
 #[derive(Debug)]
 pub enum BMWeb {
@@ -51,7 +49,6 @@ pub enum BMSimul {}
 
 #[derive(Debug)]
 pub enum BMNode {}
-
 
 impl From<BMNet> for BrokerMsg {
     fn from(value: BMNet) -> Self {
@@ -83,11 +80,11 @@ impl Broker {
     pub fn new(trust: trusted::Config, sim: simulator::Config) -> Result<Self, Box<dyn Error>> {
         let trusted = Trusted::new(trust);
         let nodes: Vec<Node> = (0..sim.nodes_root + sim.nodes_flex)
-            .map(|_| Node::new(&trusted, false))
+            .map(|_| Node::new(&trusted))
             .collect();
         let node_ids = nodes.iter().map(|n| n.id()).collect();
         Ok(Self {
-            simulator: Simulator::new(sim, node_ids)?,
+            simulator: Simulator::new(sim, node_ids, trusted.clone())?,
             network: Network::new(),
             web: Web::new(trusted.clone()),
             trusted,

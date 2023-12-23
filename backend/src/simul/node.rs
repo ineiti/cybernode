@@ -16,7 +16,6 @@ use super::{
 #[derive(Debug)]
 pub struct Node {
     info: NodeInfo,
-    online: bool,
     trusted: Sender<TrustedRequest>,
 }
 
@@ -34,17 +33,17 @@ pub enum Msg {
 }
 
 impl Node {
-    pub fn new(trusted: &Sender<TrustedRequest>, online: bool) -> Self {
-        Self::from_info(NodeInfo::random(), trusted, online)
+    pub fn new(trusted: &Sender<TrustedRequest>) -> Self {
+        Self::from_info(NodeInfo::random(), trusted)
     }
 
     /// Make a dummy node with a dummy channel to Trusted.
     #[cfg(test)]
-    pub fn dummy(online: bool) -> Self {
+    pub fn dummy() -> Self {
         use super::trusted;
         use crate::simul::trusted::Trusted;
 
-        Self::new(&Trusted::new(trusted::Config::default()), online)
+        Self::new(&Trusted::new(trusted::Config::default()))
     }
 
     /// Hash the secret to a public id.
@@ -70,24 +69,21 @@ impl Node {
 
     pub fn receive(&mut self, input: NodeMsg) -> Vec<NodeMsg> {
         let mut out = vec![];
-        if self.online {
-            debug!("Processing message {input:?}");
-            match &input.msg {
-                Msg::Ping => out.push(NodeMsg {
-                    from: self.id(),
-                    to: input.from,
-                    msg: Msg::Pong,
-                }),
-                Msg::Pong => info!("Got pong {input:?}"),
-            }
+        debug!("Processing message {input:?}");
+        match &input.msg {
+            Msg::Ping => out.push(NodeMsg {
+                from: self.id(),
+                to: input.from,
+                msg: Msg::Pong,
+            }),
+            Msg::Pong => info!("Got pong {input:?}"),
         }
         out
     }
 
-    pub fn from_info(info: NodeInfo, trusted: &Sender<TrustedRequest>, online: bool) -> Self {
+    pub fn from_info(info: NodeInfo, trusted: &Sender<TrustedRequest>) -> Self {
         let reply = Self {
             info,
-            online,
             trusted: trusted.clone(),
         };
         reply.update_trusted();
@@ -159,8 +155,8 @@ mod test {
 
     #[test]
     fn test_receive() {
-        let mut node1 = Node::dummy(true);
-        let mut node2 = Node::dummy(true);
+        let mut node1 = Node::dummy();
+        let mut node2 = Node::dummy();
         node1.tick(100);
         assert_eq!(100u64, node1.info.last_seen);
         let mut msgs = node1.receive(NodeMsg {

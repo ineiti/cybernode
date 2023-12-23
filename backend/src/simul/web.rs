@@ -2,7 +2,11 @@ use std::sync::mpsc::Sender;
 
 use tracing::{debug, error, trace};
 
-use crate::simul::{node::{Node, NodeInfo}, trusted::TReqMsg, broker::BMNet};
+use crate::simul::{
+    broker::BMNet,
+    node::{Node, NodeInfo},
+    trusted::TReqMsg,
+};
 
 use super::{
     broker::{BMWeb, BrokerMsg},
@@ -32,7 +36,6 @@ impl Web {
                             return vec![BrokerMsg::Network(BMNet::NodeAdd(Node::from_info(
                                 info,
                                 &self.trusted,
-                                true,
                             )))];
                         }
                     }
