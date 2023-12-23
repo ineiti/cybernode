@@ -20,3 +20,24 @@ The current implementation looks as follows:
   the `Simulator`.
 - `Node` is the actual definition of what happens in a node.
 This part should later on be replaced by the actual `fledger`-nodes.
+
+# Next Steps
+
+## Small
+
+- remove `online` field from `Node` - they should be added / removed using the `Trusted`
+- Increase / decrease mana with every tick
+
+## Medium
+
+- Create frontend
+
+## Large
+
+- Serve webpages
+- Use actual nodes
+
+# Changelog
+
+2023-12-23
+- Add names to nodes

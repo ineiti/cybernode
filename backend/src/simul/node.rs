@@ -110,14 +110,20 @@ impl Node {
 #[derive(Clone, Serialize)]
 pub struct NodeInfo {
     pub id: U256,
+    pub name: String,
     pub last_seen: u64,
     pub mana: U256,
 }
 
 impl NodeInfo {
     pub fn random() -> Self {
+        Self::with_id(rand::random::<[u8; 32]>().into())
+    }
+
+    pub fn with_id(id: U256) -> Self {
         Self {
-            id: rand::random::<[u8; 32]>().into(),
+            id,
+            name: names::Generator::default().next().unwrap(),
             last_seen: 0,
             mana: U256::zero(),
         }
@@ -128,8 +134,9 @@ impl Display for NodeInfo {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             formatter,
-            "{:#018x}: mana={}, last_seen={}",
+            "{:#018x}: '{}', mana={}, last_seen={}",
             self.id.as_ref()[0],
+            self.name,
             self.mana,
             self.last_seen
         )
@@ -140,8 +147,8 @@ impl std::fmt::Debug for NodeInfo {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             formatter,
-            "{:#034x}: mana={}, last_seen={}",
-            self.id, self.mana, self.last_seen
+            "{:#034x}: '{}', mana={}, last_seen={}",
+            self.id, self.name, self.mana, self.last_seen
         )
     }
 }

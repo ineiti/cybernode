@@ -17,3 +17,4 @@ ring = {version = "0.17.7", features = ["std"] }
 byte-slice-cast = "1.2.2"
 derive_more = "0.99.17"
 test-log = "0.2.14"
+names = "0.14.0"

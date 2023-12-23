@@ -27,11 +27,7 @@ impl Web {
                         if let TrustedReply::NodeInfo(info_op) = reply {
                             let info = info_op.unwrap_or_else(|| {
                                 debug!("Creating new node with id {id:#034x}");
-                                NodeInfo {
-                                    id,
-                                    last_seen: 0,
-                                    mana: 0.into(),
-                                }
+                                NodeInfo::with_id(id)
                             });
                             return vec![BrokerMsg::Network(BMNet::NodeAdd(Node::from_info(
                                 info,
