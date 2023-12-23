@@ -7,7 +7,7 @@ use ring::digest;
 use tracing::{debug, error, info};
 
 use super::{
-    broker::{BrokerAction, Module},
+    broker::{BMNode, BrokerMsg},
     trusted::{TReqMsg, TrustedRequest},
 };
 
@@ -93,10 +93,8 @@ impl Node {
         reply.update_trusted();
         reply
     }
-}
 
-impl Module for Node {
-    fn tick(&mut self, time: u64) -> Vec<BrokerAction> {
+    pub fn tick(&mut self, time: u64) -> Vec<NodeMsg> {
         if time > self.info.last_seen + 1_000_000 {
             info!("One second later");
         }
@@ -104,15 +102,8 @@ impl Module for Node {
         vec![]
     }
 
-    fn action(&mut self, task: BrokerAction) -> Vec<BrokerAction> {
-        match task {
-            BrokerAction::NodeOnline(_, _) => todo!(),
-            BrokerAction::NodeStatus(_, _) => todo!(),
-            BrokerAction::NodeAction(_) => todo!(),
-            BrokerAction::NodeMessage(_) => todo!(),
-            BrokerAction::NodeAdd(_) => todo!(),
-            BrokerAction::WebRegister(_) => todo!(),
-        }
+    pub fn action(&mut self, _task: BMNode) -> Vec<BrokerMsg> {
+        todo!()
     }
 }
 

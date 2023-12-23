@@ -12,38 +12,69 @@ use crate::simul::trusted::TrustedReply;
 use super::{
     msgs::NodeAction,
     network::Network,
-    node::{Node, NodeMsg, NodeInfo},
+    node::{Node, NodeInfo, NodeMsg},
     simulator::{self, Simulator},
     trusted::{self, Trusted, TrustedRequest},
     web::Web,
 };
 
 pub struct Broker {
-    simulator: Box<dyn Module>,
-    network: Box<dyn Module>,
-    web: Box<dyn Module>,
+    simulator: Simulator,
+    network: Network,
+    web: Web,
     trusted: Sender<TrustedRequest>,
 }
 
-pub trait Module {
-    fn action(&mut self, action: BrokerAction) -> Vec<BrokerAction>;
-    fn tick(&mut self, time: u64) -> Vec<BrokerAction>;
-}
-
+#[derive(Debug)]
 pub enum BrokerMsg {
-    Action(BrokerAction),
-    Status(NetworkStatus),
-    Tick(u64),
+    Web(BMWeb),
+    Network(BMNet),
+    Simulator(BMSimul),
+    Node(BMNode),
 }
 
 #[derive(Debug)]
-pub enum BrokerAction {
+pub enum BMNet {
     NodeOnline(U256, bool),
     NodeStatus(U256, bool),
     NodeAction(NodeAction),
     NodeMessage(NodeMsg),
     NodeAdd(Node),
+}
+#[derive(Debug)]
+pub enum BMWeb {
     WebRegister(U256),
+}
+
+#[derive(Debug)]
+pub enum BMSimul {}
+
+#[derive(Debug)]
+pub enum BMNode {}
+
+
+impl From<BMNet> for BrokerMsg {
+    fn from(value: BMNet) -> Self {
+        BrokerMsg::Network(value)
+    }
+}
+
+impl From<BMWeb> for BrokerMsg {
+    fn from(value: BMWeb) -> Self {
+        BrokerMsg::Web(value)
+    }
+}
+
+impl From<BMSimul> for BrokerMsg {
+    fn from(value: BMSimul) -> Self {
+        BrokerMsg::Simulator(value)
+    }
+}
+
+impl From<BMNode> for BrokerMsg {
+    fn from(value: BMNode) -> Self {
+        BrokerMsg::Node(value)
+    }
 }
 
 pub struct NetworkStatus {}
@@ -56,9 +87,9 @@ impl Broker {
             .collect();
         let node_ids = nodes.iter().map(|n| n.id()).collect();
         Ok(Self {
-            simulator: Box::new(Simulator::new(sim, node_ids)?),
-            network: Box::new(Network::new()),
-            web: Box::new(Web::new(trusted.clone())),
+            simulator: Simulator::new(sim, node_ids)?,
+            network: Network::new(),
+            web: Web::new(trusted.clone()),
             trusted,
         })
     }
@@ -67,21 +98,19 @@ impl Broker {
         Self::new(trusted::Config::default(), simulator::Config::default())
     }
 
-    pub fn tick(&mut self, time: u64) -> Vec<BrokerAction> {
+    pub fn tick(&mut self, time: u64) {
         let mut actions = self.simulator.tick(time);
         actions.append(&mut self.web.tick(time));
-        let mut answer = self.network.tick(time);
-        for action in actions {
-            answer.append(&mut self.network.action(action));
-        }
-        answer
+        actions.append(&mut self.network.tick(time));
+        self.handle_msgs(actions);
     }
 
     /// Registers the given node identified by the secret.
     /// It returns the corresponding node-id.
     pub fn register(&mut self, secret: U256) -> U256 {
         info!("register");
-        self.action_web(BrokerAction::WebRegister(secret));
+        let msgs = self.web.action(BMWeb::WebRegister(secret));
+        self.handle_msgs(msgs);
         Node::secret_to_id(secret)
     }
 
@@ -94,16 +123,14 @@ impl Broker {
         Err("No NodeInfo for this node available.".into())
     }
 
-    fn action_web(&mut self, action: BrokerAction) {
-        for a in self.web.action(action) {
-            self.action_net(a);
-        }
-    }
-
-    fn action_net(&mut self, action: BrokerAction) {
-        let actions = self.network.action(action);
-        if actions.len() > 0 {
-            warn!("Got some actions returned from the network module: {actions:?}");
+    fn handle_msgs(&mut self, mut msgs: Vec<BrokerMsg>) {
+        while let Some(msg) = msgs.pop() {
+            match msg {
+                BrokerMsg::Web(msg) => msgs.append(&mut self.web.action(msg)),
+                BrokerMsg::Network(msg) => msgs.append(&mut self.network.action(msg)),
+                BrokerMsg::Simulator(msg) => msgs.append(&mut self.simulator.action(msg)),
+                BrokerMsg::Node(_) => warn!("Got {msg:?} for node"),
+            }
         }
     }
 }

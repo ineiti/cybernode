@@ -3,7 +3,7 @@ use std::error::Error;
 use primitive_types::U256;
 use rand::random;
 
-use super::broker::{BrokerAction, Module};
+use super::broker::{BMSimul, BrokerMsg, BMNet};
 
 pub struct Simulator {
     nodes: Vec<NodeFlex>,
@@ -71,30 +71,22 @@ impl Simulator {
             })
             .collect()
     }
-}
 
-impl Module for Simulator {
-    fn action(&mut self, action: BrokerAction) -> Vec<super::broker::BrokerAction> {
+    pub fn action(&mut self, action: BMSimul) -> Vec<BrokerMsg> {
         match action{
-            BrokerAction::NodeOnline(_, _) => todo!(),
-            BrokerAction::NodeStatus(_, _) => todo!(),
-            BrokerAction::NodeAction(_) => todo!(),
-            BrokerAction::NodeMessage(_) => todo!(),
-            BrokerAction::NodeAdd(_) => todo!(),
-            BrokerAction::WebRegister(_) => todo!(),
         }
     }
 
-    fn tick(&mut self, _time: u64) -> Vec<super::broker::BrokerAction> {
+    pub fn tick(&mut self, _time: u64) -> Vec<BrokerMsg> {
         let mut answer = vec![];
 
         for node in &mut self.nodes {
             if node.online && node.p_sign_out > 0 && node.p_sign_out > random::<u16>() {
                 node.online = false;
-                answer.push(BrokerAction::NodeOnline(node.id, false));
+                answer.push(BMNet::NodeOnline(node.id, false).into());
             } else if node.online == false && node.p_sign_in > random::<u16>() {
                 node.online = true;
-                answer.push(BrokerAction::NodeOnline(node.id, true));
+                answer.push(BMNet::NodeOnline(node.id, true).into());
             }
         }
         answer
