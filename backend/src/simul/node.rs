@@ -90,11 +90,7 @@ impl Node {
         reply
     }
 
-    pub fn tick(&mut self, time: u64) -> Vec<NodeMsg> {
-        if time > self.info.last_seen + 1_000_000 {
-            info!("One second later");
-        }
-        self.info.last_seen = time;
+    pub fn tick(&mut self, _time: u64) -> Vec<NodeMsg> {
         vec![]
     }
 
@@ -107,7 +103,6 @@ impl Node {
 pub struct NodeInfo {
     pub id: U256,
     pub name: String,
-    pub last_seen: u64,
     pub mana: U256,
 }
 
@@ -120,7 +115,6 @@ impl NodeInfo {
         Self {
             id,
             name: names::Generator::default().next().unwrap(),
-            last_seen: 0,
             mana: U256::zero(),
         }
     }
@@ -130,11 +124,10 @@ impl Display for NodeInfo {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             formatter,
-            "{:#018x}: '{}', mana={}, last_seen={}",
+            "{:#018x}: '{}', mana={}",
             self.id.as_ref()[0],
             self.name,
             self.mana,
-            self.last_seen
         )
     }
 }
@@ -143,8 +136,8 @@ impl std::fmt::Debug for NodeInfo {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             formatter,
-            "{:#034x}: '{}', mana={}, last_seen={}",
-            self.id, self.name, self.mana, self.last_seen
+            "{:#034x}: '{}', mana={}",
+            self.id, self.name, self.mana
         )
     }
 }
@@ -158,7 +151,6 @@ mod test {
         let mut node1 = Node::dummy();
         let mut node2 = Node::dummy();
         node1.tick(100);
-        assert_eq!(100u64, node1.info.last_seen);
         let mut msgs = node1.receive(NodeMsg {
             from: node2.id(),
             to: node1.id(),

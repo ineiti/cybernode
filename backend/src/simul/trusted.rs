@@ -19,8 +19,10 @@ use super::node::NodeInfo;
 pub struct Trusted {
     // The configuration of this Trusted service
     config: Config,
-    // List of nodes with a timestamp of the latest appearance.
+    // List of known nodes
     nodes: HashMap<U256, NodeInfo>,
+    // Latest contact of nodes
+    latest: HashMap<U256, u64>,
     // Nodes can send requests here
     ch_request_rx: Receiver<TrustedRequest>,
     // Number of ticks received so far
@@ -56,6 +58,7 @@ impl Trusted {
             Self {
                 config,
                 nodes: HashMap::new(),
+                latest: HashMap::new(),
                 ch_request_rx,
                 ticks: 0,
                 last_tick_time: 0,
@@ -116,16 +119,16 @@ impl Trusted {
         }
         if self.ticks >= self.config.time_node_cleanup {
             let too_old = now - self.config.time_node_cleanup;
-            self.nodes.retain(|_, v| v.last_seen >= too_old);
+            self.latest.retain(|_, v| *v >= too_old);
         }
         self.last_tick_time = *now;
     }
 
     fn alive(&mut self, id: &U256) -> TrustedReply {
-        match self.nodes.get_mut(id) {
-            Some(node) => {
-                node.last_seen = self.last_tick_time;
-                TrustedReply::Mana(node.mana)
+        match self.latest.get_mut(id) {
+            Some(latest) => {
+                *latest = self.last_tick_time;
+                TrustedReply::Mana(self.nodes.get(id).unwrap().mana)
             }
             None => TrustedReply::ErrorMsg("Node not registered".into()),
         }
@@ -159,10 +162,15 @@ impl TrustedRequest {
 
 #[derive(Debug, Clone)]
 pub enum TReqMsg {
+    /// Registers a new node
     Register(NodeInfo),
+    /// Mark node as alive for the next x ticks
     Alive(U256),
+    /// Update mana - increase for online nodes, decrease for offline nodes
     Tick(u64),
+    /// Get NodeInfo of a node
     Info(U256),
+    /// Close the channel and stop
     Close,
 }
 

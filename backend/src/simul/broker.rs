@@ -5,7 +5,7 @@
 use std::{error::Error, sync::mpsc::Sender};
 
 use primitive_types::U256;
-use tracing::{info, warn};
+use tracing::{error, info, warn};
 
 use crate::simul::trusted::TrustedReply;
 
@@ -14,7 +14,7 @@ use super::{
     network::Network,
     node::{Node, NodeInfo},
     simulator::{self, Simulator},
-    trusted::{self, Trusted, TrustedRequest},
+    trusted::{self, TReqMsg, Trusted, TrustedRequest},
     web::Web,
 };
 
@@ -100,6 +100,9 @@ impl Broker {
         actions.append(&mut self.web.tick(time));
         actions.append(&mut self.network.tick(time));
         self.handle_msgs(actions);
+        if let Err(e) = TReqMsg::Tick(time).send(&self.trusted) {
+            error!("While sending tick to Trusted: {e:?}");
+        }
     }
 
     /// Registers the given node identified by the secret.
