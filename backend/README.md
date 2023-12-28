@@ -26,6 +26,8 @@ This part should later on be replaced by the actual `fledger`-nodes.
 ## Small
 
 - Increase / decrease mana with every tick
+  - done, make sure it's all correctly wired up with respect to Alive messages from the 
+  simulator and the web.
 
 ## Medium
 

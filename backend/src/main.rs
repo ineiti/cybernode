@@ -5,7 +5,7 @@
 
 use std::{
     sync::mpsc::{channel, Sender},
-    thread,
+    thread, time::{SystemTime, UNIX_EPOCH},
 };
 
 use actix_web::{
@@ -36,7 +36,7 @@ impl Main {
         let (tx, rx) = channel::<FromWeb>();
 
         thread::spawn(move || loop {
-            let mut broker = Broker::default().expect("Couldn't start broker");
+            let mut broker = Broker::default(Self::_now()).expect("Couldn't start broker");
             match rx.recv() {
                 Ok(msg) => match msg {
                     FromWeb::Register(tx, secret) => {
@@ -69,6 +69,10 @@ impl Main {
             .map_err(|_| UserError::InternalError)?;
         let ni = rx.recv().map_err(|_| UserError::InternalError)?;
         Ok(HttpResponse::Ok().json(ni))
+    }
+
+    fn _now() -> u128 {
+        SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis()
     }
 }
 

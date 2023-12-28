@@ -6,7 +6,7 @@ use backend::simul::broker::Broker;
 
 #[test]
 fn test_register() -> Result<(), Box<dyn Error>>{
-    let mut broker = Broker::default().expect("Couldn't start broker");
+    let mut broker = Broker::default(0).expect("Couldn't start broker");
     let secret = rand::random::<[u8; 32]>().into();
     let id = broker.register(secret);
     info!("Registered and got id: {id:#34x}");

@@ -48,7 +48,7 @@ impl Web {
         vec![]
     }
 
-    pub fn tick(&mut self, time: u64) -> Vec<BrokerMsg> {
+    pub fn tick(&mut self, time: u128) -> Vec<BrokerMsg> {
         trace!("Tick @ {time}");
         vec![]
     }

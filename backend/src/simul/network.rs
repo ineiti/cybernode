@@ -34,7 +34,7 @@ impl Network {
         vec![]
     }
 
-    pub fn tick(&mut self, now: u64) -> Vec<BrokerMsg> {
+    pub fn tick(&mut self, now: u128) -> Vec<BrokerMsg> {
         let mut msgs = vec![];
         for node in self.nodes.values_mut() {
             msgs.append(&mut node.tick(now));

@@ -77,8 +77,8 @@ impl From<BMNode> for BrokerMsg {
 pub struct NetworkStatus {}
 
 impl Broker {
-    pub fn new(trust: trusted::Config, sim: simulator::Config) -> Result<Self, Box<dyn Error>> {
-        let trusted = Trusted::new(trust);
+    pub fn new(trust: trusted::Config, sim: simulator::Config, now: u128) -> Result<Self, Box<dyn Error>> {
+        let trusted = Trusted::new(trust, now);
         let nodes: Vec<Node> = (0..sim.nodes_root + sim.nodes_flex)
             .map(|_| Node::new(&trusted))
             .collect();
@@ -91,11 +91,11 @@ impl Broker {
         })
     }
 
-    pub fn default() -> Result<Self, Box<dyn Error>> {
-        Self::new(trusted::Config::default(), simulator::Config::default())
+    pub fn default(now: u128) -> Result<Self, Box<dyn Error>> {
+        Self::new(trusted::Config::default(), simulator::Config::default(), now)
     }
 
-    pub fn tick(&mut self, time: u64) {
+    pub fn tick(&mut self, time: u128) {
         let mut actions = self.simulator.tick(time);
         actions.append(&mut self.web.tick(time));
         actions.append(&mut self.network.tick(time));

@@ -2,7 +2,7 @@ use std::{error::Error, sync::mpsc::Sender};
 
 use primitive_types::U256;
 use rand::random;
-use tracing::error;
+use tracing::{error, trace};
 
 use super::{
     broker::{BMNet, BMSimul, BrokerMsg},
@@ -87,7 +87,7 @@ impl Simulator {
         match action {}
     }
 
-    pub fn tick(&mut self, _time: u64) -> Vec<BrokerMsg> {
+    pub fn tick(&mut self, _time: u128) -> Vec<BrokerMsg> {
         let mut answer = vec![];
 
         for node in &mut self.nodes {
@@ -103,6 +103,11 @@ impl Simulator {
                         }
                     }
                     Err(_) => error!("Didn't find node {:?}", node.id),
+                }
+            }
+            if node.online {
+                if let Ok(TrustedReply::Mana(m)) = TReqMsg::Alive(node.id).send(&self.trusted){
+                    trace!("Mana of node {}: {}", node.id, m);
                 }
             }
         }
@@ -130,7 +135,7 @@ mod test {
         let ids = (0..cfg.nodes_root + cfg.nodes_flex)
             .map(|_| rand::random::<[u8; 32]>().into())
             .collect();
-        let trusted = Trusted::new_default();
+        let trusted = Trusted::new_default(0);
         let mut simul = Simulator::new(cfg.clone(), ids, trusted)?;
         assert_eq!(0, simul.nodes_online());
 

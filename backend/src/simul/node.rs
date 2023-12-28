@@ -43,7 +43,7 @@ impl Node {
         use super::trusted;
         use crate::simul::trusted::Trusted;
 
-        Self::new(&Trusted::new(trusted::Config::default()))
+        Self::new(&Trusted::new(trusted::Config::default(), 0))
     }
 
     /// Hash the secret to a public id.
@@ -90,7 +90,7 @@ impl Node {
         reply
     }
 
-    pub fn tick(&mut self, _time: u64) -> Vec<NodeMsg> {
+    pub fn tick(&mut self, _time: u128) -> Vec<NodeMsg> {
         vec![]
     }
 
