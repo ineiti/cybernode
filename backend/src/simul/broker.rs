@@ -4,7 +4,6 @@
 
 use std::{error::Error, sync::mpsc::Sender};
 
-use primitive_types::U256;
 use tracing::{error, info, warn};
 
 use crate::simul::trusted::TrustedReply;
@@ -15,7 +14,7 @@ use super::{
     node::{Node, NodeInfo},
     simulator::{self, Simulator},
     trusted::{self, TReqMsg, Trusted, TrustedRequest},
-    web::Web,
+    web::Web, node_types::{NodeSecret, NodeID, Mana},
 };
 
 pub struct Broker {
@@ -37,11 +36,11 @@ pub enum BrokerMsg {
 pub enum BMNet {
     NodeAction(NodeAction),
     NodeAdd(Node),
-    NodeDel(U256),
+    NodeDel(NodeID),
 }
 #[derive(Debug)]
 pub enum BMWeb {
-    WebRegister(U256),
+    WebRegister(NodeSecret),
 }
 
 #[derive(Debug)]
@@ -115,17 +114,17 @@ impl Broker {
 
     /// Registers the given node identified by the secret.
     /// It returns the corresponding node-id.
-    pub fn register(&mut self, secret: U256) -> U256 {
+    pub fn register(&mut self, secret: NodeSecret) -> NodeID {
         info!("register");
         let msgs = self.web.action(BMWeb::WebRegister(secret));
         self.handle_msgs(msgs);
-        Node::secret_to_id(secret)
+        secret.into()
     }
 
     /// Updates the mana of the node, and marks it as still connected.
     /// It returns how much mana the node currenlty has.
     /// TODO: perhaps it should return the NodeInfo?
-    pub fn alive(&mut self, id: U256) -> Result<U256, Box<dyn Error>> {
+    pub fn alive(&mut self, id: NodeID) -> Result<Mana, Box<dyn Error>> {
         info!("alive {id}");
         match TReqMsg::Alive(id).send(&self.trusted)? {
             TrustedReply::Mana(m) => return Ok(m),
@@ -134,7 +133,7 @@ impl Broker {
     }
 
     /// Returns the NodeInfo for this given id.
-    pub fn get_node_info(&mut self, id: U256) -> Result<NodeInfo, Box<dyn Error>> {
+    pub fn get_node_info(&mut self, id: NodeID) -> Result<NodeInfo, Box<dyn Error>> {
         let reply = trusted::TReqMsg::Info(id).send(&self.trusted)?;
         if let TrustedReply::NodeInfo(Some(ni)) = reply {
             return Ok(ni);

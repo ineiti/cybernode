@@ -1,13 +1,11 @@
-use byte_slice_cast::*;
 use serde::Serialize;
 use std::{fmt::Display, sync::mpsc::Sender};
 
-use primitive_types::U256;
-use ring::digest;
 use tracing::{debug, error, info};
 
 use super::{
     broker::{BMNode, BrokerMsg},
+    node_types::{Mana, NodeID},
     trusted::{TReqMsg, TrustedRequest},
 };
 
@@ -21,8 +19,8 @@ pub struct Node {
 
 #[derive(Debug)]
 pub struct NodeMsg {
-    pub from: U256,
-    pub to: U256,
+    pub from: NodeID,
+    pub to: NodeID,
     pub msg: Msg,
 }
 
@@ -46,14 +44,7 @@ impl Node {
         Self::new(&Trusted::new(trusted::Config::default(), 0))
     }
 
-    /// Hash the secret to a public id.
-    pub fn secret_to_id(secret: U256) -> U256 {
-        digest::digest(&digest::SHA256, secret.as_byte_slice())
-            .as_ref()
-            .into()
-    }
-
-    pub fn id(&self) -> U256 {
+    pub fn id(&self) -> NodeID {
         self.info.id
     }
 
@@ -101,21 +92,21 @@ impl Node {
 
 #[derive(Clone, Serialize)]
 pub struct NodeInfo {
-    pub id: U256,
+    pub id: NodeID,
     pub name: String,
-    pub mana: U256,
+    pub mana: Mana,
 }
 
 impl NodeInfo {
     pub fn random() -> Self {
-        Self::with_id(rand::random::<[u8; 32]>().into())
+        Self::with_id(NodeID::random())
     }
 
-    pub fn with_id(id: U256) -> Self {
+    pub fn with_id(id: NodeID) -> Self {
         Self {
             id,
             name: names::Generator::default().next().unwrap(),
-            mana: U256::zero(),
+            mana: Mana::zero(),
         }
     }
 }
@@ -124,10 +115,8 @@ impl Display for NodeInfo {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             formatter,
-            "{:#018x}: '{}', mana={}",
-            self.id.as_ref()[0],
-            self.name,
-            self.mana,
+            "{}: '{}', mana={}",
+            self.id, self.name, self.mana,
         )
     }
 }
@@ -136,7 +125,7 @@ impl std::fmt::Debug for NodeInfo {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             formatter,
-            "{:#034x}: '{}', mana={}",
+            "{:?}: '{}', mana={}",
             self.id, self.name, self.mana
         )
     }

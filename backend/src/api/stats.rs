@@ -1,8 +1,9 @@
 use serde::Serialize;
 use utoipa::ToSchema;
-use primitive_types::U256;
+
+use crate::simul::node_types::NodeID;
 
 #[derive(ToSchema, Serialize)]
 pub struct StatsReply {
-   pub ids: Vec<U256>,
+   pub ids: Vec<NodeID>,
 }

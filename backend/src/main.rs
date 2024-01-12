@@ -19,11 +19,11 @@ use backend::{
     api::stats::StatsReply,
     simul::{
         broker::Broker,
-        node::{Node, NodeInfo},
+        node::NodeInfo,
+        node_types::{Mana, NodeSecret},
     },
 };
 use derive_more::Display;
-use primitive_types::U256;
 use tracing::error;
 
 #[get("/v1/stats")]
@@ -64,9 +64,8 @@ impl Main {
                 let ni = broker.get_node_info(id).unwrap();
                 tx.send(ni)?
             }
-            FromWeb::Alive(tx, secret) => {
-                let id = Node::secret_to_id(secret);
-                let mana = broker.alive(id)?;
+            FromWeb::Alive(tx, id) => {
+                let mana = broker.alive(id.into())?;
                 tx.send(mana)?
             }
         })
@@ -83,9 +82,10 @@ impl Main {
 
     async fn alive(state: web::Data<Main>) -> Result<HttpResponse> {
         let (tx, rx) = channel();
+        // TODO: get secret here
         state
             .tx
-            .send(FromWeb::Alive(tx, U256::zero()))
+            .send(FromWeb::Alive(tx, NodeSecret::zero()))
             .map_err(|_| UserError::InternalError)?;
         let ni = rx.recv().map_err(|_| UserError::InternalError)?;
         Ok(HttpResponse::Ok().json(ni))
@@ -93,9 +93,10 @@ impl Main {
 
     async fn register(state: web::Data<Main>) -> Result<HttpResponse> {
         let (tx, rx) = channel();
+        // TODO: get secret here
         state
             .tx
-            .send(FromWeb::Register(tx, U256::zero()))
+            .send(FromWeb::Register(tx, NodeSecret::zero()))
             .map_err(|_| UserError::InternalError)?;
         let ni = rx.recv().map_err(|_| UserError::InternalError)?;
         Ok(HttpResponse::Ok().json(ni))
@@ -111,8 +112,8 @@ impl Main {
 
 #[derive(Debug, Clone)]
 enum FromWeb {
-    Register(Sender<NodeInfo>, U256),
-    Alive(Sender<U256>, U256),
+    Register(Sender<NodeInfo>, NodeSecret),
+    Alive(Sender<Mana>, NodeSecret),
 }
 
 // enum ToWeb {}

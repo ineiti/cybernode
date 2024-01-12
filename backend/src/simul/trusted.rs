@@ -5,10 +5,9 @@ use std::{
     thread,
 };
 
-use primitive_types::U256;
 use tracing::{debug, error, info, trace, warn};
 
-use super::node::NodeInfo;
+use super::{node::NodeInfo, node_types::{NodeID, Mana}};
 
 /// Trusted is a blockchain simulation.
 /// In the simulation it replaces a central server with global knowledge.
@@ -27,7 +26,7 @@ pub struct Trusted {
     // The configuration of this Trusted service
     config: Config,
     // List of known nodes
-    nodes: HashMap<U256, NodeData>,
+    nodes: HashMap<NodeID, NodeData>,
     // Nodes can send requests here
     ch_request_rx: Receiver<TrustedRequest>,
     // Last mana increase
@@ -106,7 +105,7 @@ impl Trusted {
                     }
                     TReqMsg::Alive(id) => msg.reply(self.alive(id)),
                     TReqMsg::Info(id) => {
-                        trace!("Got asked for node {id:#34x}");
+                        trace!("Got asked for node {id}");
                         msg.reply(TrustedReply::NodeInfo(
                             self.nodes.get(id).map(|n| n.info.clone()),
                         ))
@@ -163,7 +162,7 @@ impl Trusted {
     /// Every node should call this from time to time in order to be kept alive.
     /// Else the node will be marked as 'inactive', and it will start losing its
     /// mana.
-    fn alive(&mut self, id: &U256) -> TrustedReply {
+    fn alive(&mut self, id: &NodeID) -> TrustedReply {
         if let Some(node) = self.nodes.get_mut(id) {
             node.active_until = self.last_tick_time + self.config.time_node_active;
             TrustedReply::Mana(node.info.mana)
@@ -203,11 +202,11 @@ pub enum TReqMsg {
     /// Registers a new node
     Register(NodeInfo),
     /// Mark node as alive for the next x ticks
-    Alive(U256),
+    Alive(NodeID),
     /// Update mana - increase for online nodes, decrease for offline nodes
     Tick(u128),
     /// Get NodeInfo of a node
-    Info(U256),
+    Info(NodeID),
     /// Close the channel and stop
     Close,
 }
@@ -228,7 +227,7 @@ impl TReqMsg {
 pub enum TrustedReply {
     NodeList(Vec<NodeInfo>),
     NodeInfo(Option<NodeInfo>),
-    Mana(U256),
+    Mana(Mana),
     OK,
     ErrorMsg(String),
 }

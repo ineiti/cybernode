@@ -25,8 +25,6 @@ This part should later on be replaced by the actual `fledger`-nodes.
 
 ## Small
 
-- Add NodeID and Mana types
-
 ## Medium
 
 - Create frontend
@@ -42,6 +40,7 @@ This part should later on be replaced by the actual `fledger`-nodes.
 - Increase / decrease mana with every tick
   - done, make sure it's all correctly wired up with respect to Alive messages from the 
   simulator and the web.
+- Replace U256 with NodeID, NodeSecret, and Mana types
 
 2023-12-23
 - Add names to nodes

@@ -1,12 +1,12 @@
 use std::{error::Error, sync::mpsc::Sender};
 
-use primitive_types::U256;
 use rand::random;
 use tracing::{error, trace};
 
 use super::{
     broker::{BMNet, BMSimul, BrokerMsg},
     node::Node,
+    node_types::NodeID,
     trusted::{TReqMsg, TrustedReply, TrustedRequest},
 };
 
@@ -16,7 +16,7 @@ pub struct Simulator {
 }
 
 pub struct NodeFlex {
-    id: U256,
+    id: NodeID,
     online: bool,
     p_sign_in: u16,
     p_sign_out: u16,
@@ -49,19 +49,19 @@ impl Simulator {
     /// TODO: probably this'll need a Trusted tx-channel later on.
     pub fn new(
         config: Config,
-        nodes: Vec<U256>,
+        node_ids: Vec<NodeID>,
         trusted: Sender<TrustedRequest>,
     ) -> Result<Self, Box<dyn Error>> {
-        if nodes.len() != config.nodes_root + config.nodes_flex {
+        if node_ids.len() != config.nodes_root + config.nodes_flex {
             return Err("wrong number of nodes".into());
         }
         Ok(Self {
-            nodes: Self::node_flex(config, nodes),
+            nodes: Self::node_flex(config, node_ids),
             trusted,
         })
     }
 
-    fn node_flex(config: Config, ids: Vec<U256>) -> Vec<NodeFlex> {
+    fn node_flex(config: Config, ids: Vec<NodeID>) -> Vec<NodeFlex> {
         let mut nf = Self::node_flex_part(ids[0..config.nodes_root].to_vec(), u16::MAX, 0);
         nf.append(&mut Self::node_flex_part(
             ids[config.nodes_root..].to_vec(),
@@ -71,8 +71,8 @@ impl Simulator {
         nf
     }
 
-    fn node_flex_part(nodes: Vec<U256>, p_sign_in: u16, p_sign_out: u16) -> Vec<NodeFlex> {
-        nodes
+    fn node_flex_part(node_ids: Vec<NodeID>, p_sign_in: u16, p_sign_out: u16) -> Vec<NodeFlex> {
+        node_ids
             .iter()
             .map(|n| NodeFlex {
                 id: *n,
@@ -106,7 +106,7 @@ impl Simulator {
                 }
             }
             if node.online {
-                if let Ok(TrustedReply::Mana(m)) = TReqMsg::Alive(node.id).send(&self.trusted){
+                if let Ok(TrustedReply::Mana(m)) = TReqMsg::Alive(node.id).send(&self.trusted) {
                     trace!("Mana of node {}: {}", node.id, m);
                 }
             }
@@ -133,7 +133,7 @@ mod test {
     fn test_online() -> Result<(), Box<dyn Error>> {
         let cfg = Config::default();
         let ids = (0..cfg.nodes_root + cfg.nodes_flex)
-            .map(|_| rand::random::<[u8; 32]>().into())
+            .map(|_| NodeID::random())
             .collect();
         let trusted = Trusted::new_default(0);
         let mut simul = Simulator::new(cfg.clone(), ids, trusted)?;

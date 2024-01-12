@@ -25,12 +25,12 @@ impl Web {
     pub fn action(&mut self, action: BMWeb) -> Vec<BrokerMsg> {
         match action {
             BMWeb::WebRegister(secret) => {
-                let id = Node::secret_to_id(secret);
+                let id = secret.into();
                 match TReqMsg::Info(id).send(&self.trusted) {
                     Ok(reply) => {
                         if let TrustedReply::NodeInfo(info_op) = reply {
                             let info = info_op.unwrap_or_else(|| {
-                                debug!("Creating new node with id {id:#034x}");
+                                debug!("Creating new node with id {id}");
                                 NodeInfo::with_id(id)
                             });
                             return vec![BrokerMsg::Network(BMNet::NodeAdd(Node::from_info(

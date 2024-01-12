@@ -1,15 +1,14 @@
 use std::collections::HashMap;
 
-use primitive_types::U256;
 use tracing::{debug, trace};
 
 use super::{
     broker::{BMNet, BrokerMsg},
-    node::{Node, NodeMsg},
+    node::{Node, NodeMsg}, node_types::NodeID,
 };
 
 pub struct Network {
-    nodes: HashMap<U256, Node>,
+    nodes: HashMap<NodeID, Node>,
 }
 
 impl Network {
