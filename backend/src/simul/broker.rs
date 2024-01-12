@@ -77,7 +77,11 @@ impl From<BMNode> for BrokerMsg {
 pub struct NetworkStatus {}
 
 impl Broker {
-    pub fn new(trust: trusted::Config, sim: simulator::Config, now: u128) -> Result<Self, Box<dyn Error>> {
+    pub fn new(
+        trust: trusted::Config,
+        sim: simulator::Config,
+        now: u128,
+    ) -> Result<Self, Box<dyn Error>> {
         let trusted = Trusted::new(trust, now);
         let nodes: Vec<Node> = (0..sim.nodes_root + sim.nodes_flex)
             .map(|_| Node::new(&trusted))
@@ -92,7 +96,11 @@ impl Broker {
     }
 
     pub fn default(now: u128) -> Result<Self, Box<dyn Error>> {
-        Self::new(trusted::Config::default(), simulator::Config::default(), now)
+        Self::new(
+            trusted::Config::default(),
+            simulator::Config::default(),
+            now,
+        )
     }
 
     pub fn tick(&mut self, time: u128) {
@@ -112,6 +120,17 @@ impl Broker {
         let msgs = self.web.action(BMWeb::WebRegister(secret));
         self.handle_msgs(msgs);
         Node::secret_to_id(secret)
+    }
+
+    /// Updates the mana of the node, and marks it as still connected.
+    /// It returns how much mana the node currenlty has.
+    /// TODO: perhaps it should return the NodeInfo?
+    pub fn alive(&mut self, id: U256) -> Result<U256, Box<dyn Error>> {
+        info!("alive {id}");
+        match TReqMsg::Alive(id).send(&self.trusted)? {
+            TrustedReply::Mana(m) => return Ok(m),
+            msg => return Err(format!("Got wrong type of message: {msg:?}").into()),
+        }
     }
 
     /// Returns the NodeInfo for this given id.

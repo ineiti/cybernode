@@ -25,9 +25,7 @@ This part should later on be replaced by the actual `fledger`-nodes.
 
 ## Small
 
-- Increase / decrease mana with every tick
-  - done, make sure it's all correctly wired up with respect to Alive messages from the 
-  simulator and the web.
+- Add NodeID and Mana types
 
 ## Medium
 
@@ -39,6 +37,11 @@ This part should later on be replaced by the actual `fledger`-nodes.
 - Use actual nodes
 
 # Changelog
+
+2024-01-12
+- Increase / decrease mana with every tick
+  - done, make sure it's all correctly wired up with respect to Alive messages from the 
+  simulator and the web.
 
 2023-12-23
 - Add names to nodes
