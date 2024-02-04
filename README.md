@@ -59,6 +59,9 @@ Later:
 - fair sharing
   - contrary to other systems, Mana allows tracking how much you shared, and
   how much your shared content has been used
+- sharing is caring
+  - you only share things you support
+  - opt-in to sharing by keeping it in the browser
 
 # Why?
 
@@ -75,12 +78,33 @@ The goals of CyberNode are:
 - find other people with the same interests
 - test new technology
 
+# Architecture
+
+Cybernode is architectured as multiple Kademlia-routed networks which work together.
+
+The main networks are the following three. 
+One is common to all nodes, while the two others can in theory work together with other
+similar networks.
+However, in a first time, these three networks should be unique:
+- common network for all nodes: group-id to node-id lookups
+- preferred DNS network: readable names to group-id
+- preferred Mana network: distributes and transfers Mana
+- preferred reputation network: allows marking of other networks as NSFW or other
+categories of undesirable content.
+
+For usage, the following types of networks are available:
+- web content: decentralized storage of webpages - if you view it, you opt-in to
+also share the same content with other nodes.
+- file storage: similar to IPFS, but each file storage network should conform to
+a certain category of files.
+This allows users to avoid networks they wouldn't want to support.
+- smart contracts: automated execution of code which can transfer Mana
+
 # Other such systems
 
 Technically, CyberNode is based or similar to the following systems.
 Feel free to create PRs to add other such Systems:
 
-- [Bittorrent] - for sharing data in a distributed system.
-CyberNode adds the possibility to make sure you are not a
-leech.
-- [Tor] - anonymizing traffic is an important part of 
+- [Bittorrent](https://en.wikipedia.org/wiki/BitTorrent) - for sharing data in a distributed system
+- [Tor](https://www.torproject.org/) - anonymity online
+- [Veilid](https://veilid.com/) - an Open Source, distributed application framework

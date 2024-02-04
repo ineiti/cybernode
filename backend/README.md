@@ -25,6 +25,8 @@ This part should later on be replaced by the actual `fledger`-nodes.
 
 ## Small
 
+- 
+
 ## Medium
 
 - Create frontend

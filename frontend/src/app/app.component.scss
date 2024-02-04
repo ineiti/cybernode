@@ -1,0 +1,68 @@
+/* Global styles */
+body {
+    font-family: sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f2f2f2;
+}
+
+/* Status bar styles */
+.status-bar {
+    width: 20%;
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100%;
+    border-left: 1px solid #ccc;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.status-bar .box {
+    height: 50px;
+    background-color: #eee;
+    text-align: center;
+    line-height: 50px;
+    margin-bottom: 30px;
+    /* Add margin to space out the boxes */
+}
+
+.menu {
+    width: 20%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    border-right: 1px solid #ccc;
+    padding: 20px;
+    box-sizing: border-box;
+    height: 100%;
+}
+
+.menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0 0;
+}
+
+.menu li {
+    margin-bottom: 10px;
+}
+
+.menu a {
+    text-decoration: none;
+    color: #333;
+}
+
+/* Main content styles */
+.main-content {
+    width: 60%;
+    margin: 0 auto;
+    /* Add margin to center the main content */
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* Specific styles for dummy content */
+.dummy-statistic {
+    margin-bottom: 10px;
+}

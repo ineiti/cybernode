@@ -7,6 +7,7 @@
     "git@latest",
     "vim@latest",
     "openssh@latest",
+    "less@latest",
   ],
   "shell": {
     "init_hook": [
@@ -14,7 +15,7 @@
     ],
     "scripts": {
       "test": [
-        "cd backend && cargo test"
+        "cd backend && cargo test",
       ],
     },
   },
