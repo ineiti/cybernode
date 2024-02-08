@@ -1,0 +1,15 @@
+<div class="status-bar">
+    <h2>System status</h2>
+    <div class="box">
+        Node Name: {{ (nodeStatus | async)!.name }}
+    </div>
+    <div class="box">
+        Your Mana: {{ (nodeStatus | async)!.mana }}
+    </div>
+    <div class="box">
+        Total Users: {{ (networkStatus | async )!.users_total }}
+    </div>
+    <div class="box">
+        Active Users: {{ (networkStatus | async )!.users_active }}
+    </div>
+</div>

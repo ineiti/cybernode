@@ -1,32 +1,10 @@
 <div class="container">
-  <div class="status-bar">
-    <div class="box">
-      <span class="dummy-statistic">Total Users: 10,000</span>
-    </div>
-    <div class="box">
-      <span class="dummy-statistic">Active Users: 5,000</span>
-    </div>
-    <div class="box">
-      <span class="dummy-statistic">New Users Today: 100</span>
-    </div>
-  </div>
 
-  <div class="menu">
-    <ul>
-      <li><a href="#">Home</a></li>
-      <li><a href="#">About Us</a></li>
-      <li><a href="#">Services</a></li>
-      <li><a href="#">Contact Us</a></li>
-    </ul>
-  </div>
+  <app-status/>
+
+  <app-popular/>
 
   <div class="main-content">
-    <h1>Welcome to My Technical Website</h1>
-    <p>This is a technical website showcasing innovative ideas and solutions in the field of technology.</p>
-    <p>We are passionate about empowering businesses and individuals to leverage the power of technology.</p>
-    <p>Our team of experienced experts is committed to providing you with the best possible solutions to your technical
-      challenges.</p>
+    <router-outlet></router-outlet>
   </div>
 </div>
-
-<router-outlet></router-outlet>
