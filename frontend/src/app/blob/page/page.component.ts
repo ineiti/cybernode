@@ -1,4 +1,8 @@
-import { Component, Input } from '@angular/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { Component, Input, NgZone } from '@angular/core';
+import { ConnectorService } from '../../connector.service';
+import { linkToScript } from '../../../lib/convert';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-page',
@@ -9,22 +13,19 @@ import { Component, Input } from '@angular/core';
 })
 export class PageComponent {
   @Input() url = "";
-  html = "<h1>Setting up</h1>";
+  html: SafeHtml = "<h1>Setting up</h1>";
 
-  async ngOnInit() {
-    console.log(`URL is: ${this.url}`);
-    switch (this.url) {
-      case "cybernode":
-        this.html = `
-<h1>Welcome to My Technical Website</h1>
-  <p>This is a technical website showcasing innovative ideas and solutions in the field of technology.</p>
-  <p>We are passionate about empowering businesses and individuals to leverage the power of technology.</p>
-  <p>Our team of experienced experts is committed to providing you with the best possible solutions to your technical
-    challenges.</p>
-        `;
-        break;
-      default:
-        this.html = `<h1>404 Page not found</h1><p>Sorry, don't know page ${this.url}`;
-    }
+  constructor(private connection: ConnectorService, private sanitizer: DomSanitizer,
+    private router: Router, private route: ActivatedRoute, private ngZone: NgZone) {
+    (window as any)['nextPage'] = (p: string) => this.nextPage(p);
+  }
+
+  async ngOnChanges() {
+    const raw = linkToScript(await this.connection.getPage(this.url), window.location.origin);
+    this.html = this.sanitizer.bypassSecurityTrustHtml(raw);
+  }
+
+  nextPage(page: string) {
+    this.router.navigate([`${page}`]);
   }
 }

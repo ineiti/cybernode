@@ -19,11 +19,16 @@ export class ConnectorService {
   });
   public readonly nodeStatus: Observable<NodeStatus> = this._nodeStatus.asObservable();
 
+  connection = new NodeConnection();
+
   constructor() {
-    let connection = new NodeConnection();
     interval(1000).subscribe(async () => {
-      this._nodeStatus.next(await connection.getNodeStatus());
-      this._networkStatus.next(await connection.getNetworkStatus());
+      this._nodeStatus.next(await this.connection.getNodeStatus());
+      this._networkStatus.next(await this.connection.getNetworkStatus());
     });
+  }
+
+  async getPage(url: string): Promise<string> {
+    return this.connection.getPage(url);
   }
 }

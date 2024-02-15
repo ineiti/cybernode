@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { StatusComponent } from './sidebars/status/status.component';
 import { PopularComponent } from './sidebars/popular/popular.component';
+import { ConnectorService } from './connector.service';
 
 @Component({
   selector: 'app-root',
