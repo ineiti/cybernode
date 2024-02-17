@@ -1,0 +1,92 @@
+<html>
+
+<head>
+    <script>
+
+        async function cleanAndAppendNodeWithoutChildren(dst, src) {
+            if (src.nodeName === "IMG") {
+                console.log(`Image with ${src.src}`);
+                const imgSrc = src.src;
+                src.src = "";
+                const img = await (await fetch(imgSrc)).blob();
+                var reader = new FileReader();
+                reader.readAsDataURL(img);
+                reader.onloadend = function () {
+                    src.src = reader.result;
+                }
+            }
+            dst.appendChild(src);
+            return true;
+        }
+
+        async function copyBodyChildNodes(dst, src) {
+            for (const c of src) {
+                await cleanAndAppendNodeWithoutChildren(dst, c.cloneNode(false));
+                if (c.childNodes.length > 0) {
+                    await copyBodyChildNodes(dst.lastChild, c.childNodes);
+                }
+            }
+        }
+
+        async function cleanAndAppendHeadNodeWithoutChildren(dst, src) {
+            if (src.rel === "stylesheet") {
+                console.log(`Stylesheet from ${src.href}`);
+                const cssText = await (await fetch(src.href)).text();
+                const styleElement = document.createElement('style');
+                styleElement.textContent = cssText;
+                document.head.appendChild(styleElement);
+                for (const rule of styleElement.sheet.cssRules) {
+                    rule.selectorText = `div#obj ${rule.selectorText}`;
+                }
+            } else {
+                dst.appendChild(src);
+            }
+            return true;
+        }
+
+        async function copyHeadChildNodes(dst, src) {
+            for (const c of src) {
+                await cleanAndAppendHeadNodeWithoutChildren(dst, c.cloneNode(false));
+                if (c.childNodes.length > 0) {
+                    await copyHeadChildNodes(dst.lastChild, c.childNodes);
+                }
+            }
+        }
+
+
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            const parser = new DOMParser();
+            const docTmp = parser.parseFromString(
+                `<head>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1 onclick="console.log('blur')">Modified CSS</h1>
+    <div style="width: 200px;">
+        <h2>Modified CSS 2</h2>
+        <img src="http://localhost:8000/logo.png"/>
+        <p>Some text</p>
+    </div>
+</body>`,
+                'text/html');
+
+            const doc = parser.parseFromString("", 'text/html');
+            const cssText = await (await fetch("styles.css")).text();
+            await copyHeadChildNodes(doc.head, docTmp.head.childNodes);
+            await copyBodyChildNodes(doc.body, docTmp.body.childNodes);
+
+            document.getElementById('obj').appendChild(doc.documentElement);
+        }, false);
+    </script>
+</head>
+
+<body>
+
+    <h1>Original styles</h1>
+    <div id="obj">
+    </div>
+
+</body>
+
+</html>
