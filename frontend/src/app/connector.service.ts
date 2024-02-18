@@ -29,6 +29,10 @@ export class ConnectorService {
   }
 
   async getPage(url: string): Promise<string> {
-    return this.connection.getPage(url);
+    return this.connection.getText(url);
+  }
+
+  async getBlob(url: string): Promise<Blob> {
+    return this.connection.getBlob(url);
   }
 }

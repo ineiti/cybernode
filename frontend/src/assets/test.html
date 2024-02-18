@@ -30,12 +30,14 @@
 
         async function cleanAndAppendHeadNodeWithoutChildren(dst, src) {
             if (src.rel === "stylesheet") {
+                console.dir(src.constructor.name);
                 console.log(`Stylesheet from ${src.href}`);
                 const cssText = await (await fetch(src.href)).text();
                 const styleElement = document.createElement('style');
                 styleElement.textContent = cssText;
                 document.head.appendChild(styleElement);
                 for (const rule of styleElement.sheet.cssRules) {
+                    console.dir(rule.constructor.name);
                     rule.selectorText = `div#obj ${rule.selectorText}`;
                 }
             } else {

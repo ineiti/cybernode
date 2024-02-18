@@ -1,7 +1,7 @@
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Component, Input, NgZone } from '@angular/core';
 import { ConnectorService } from '../../connector.service';
-import { linkToScript } from '../../../lib/convert';
+import { PreparePage } from '../../../lib/convert';
 import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
@@ -13,19 +13,21 @@ import { ActivatedRoute, Router } from '@angular/router';
 })
 export class PageComponent {
   @Input() url = "";
-  html: SafeHtml = "<h1>Setting up</h1>";
+  converter?: PreparePage;
 
-  constructor(private connection: ConnectorService, private sanitizer: DomSanitizer,
-    private router: Router, private route: ActivatedRoute, private ngZone: NgZone) {
+  constructor(private connection: ConnectorService, private router: Router) {
     (window as any)['nextPage'] = (p: string) => this.nextPage(p);
+    this.converter = new PreparePage((url: string) => {return this.connection.getPage(url)},
+    (url: string) => {return this.connection.getBlob(url)});
   }
 
   async ngOnChanges() {
-    const raw = linkToScript(await this.connection.getPage(this.url), window.location.origin);
-    this.html = this.sanitizer.bypassSecurityTrustHtml(raw);
+    console.log(`Loading page ${this.url}`);
+    document.getElementById('cnpage')?.replaceChildren(await this.converter!.convert(this.url));
   }
 
   nextPage(page: string) {
-    this.router.navigate([`${page}`]);
+    console.log(`Navigating to ${page}`)
+    this.router.navigate([`/page/${page}`]);
   }
 }
