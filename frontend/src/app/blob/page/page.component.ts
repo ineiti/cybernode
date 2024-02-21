@@ -17,13 +17,13 @@ export class PageComponent {
 
   constructor(private connection: ConnectorService, private router: Router) {
     (window as any)['nextPage'] = (p: string) => this.nextPage(p);
-    this.converter = new PreparePage((url: string) => {return this.connection.getPage(url)},
+    this.converter = new PreparePage(document.baseURI, (url: string) => {return this.connection.getPage(url)},
     (url: string) => {return this.connection.getBlob(url)});
   }
 
   async ngOnChanges() {
     console.log(`Loading page ${this.url}`);
-    document.getElementById('cnpage')?.replaceChildren(await this.converter!.convert(this.url));
+    document.getElementById(PreparePage.cnbody)?.replaceChildren(await this.converter!.convert(this.url));
   }
 
   nextPage(page: string) {

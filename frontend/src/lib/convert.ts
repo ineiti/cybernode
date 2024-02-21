@@ -25,27 +25,56 @@ export function linkToScript(html: string, base: string): string {
 }
 
 export class PreparePage {
-    constructor(private getText: (url: string) => Promise<string>,
-        private getBlob: (url: string) => Promise<Blob>) { }
+    static cnbody = "cnbody";
+    static cnhead = "cnhead";
+
+    basePage: string = "";
+    constructor(private base: string, private getText: (url: string) => Promise<string>,
+        private getBlob: (url: string) => Promise<Blob>) {
+        this.basePage = base + "page/";
+    }
+
+    /**
+     * The standard URL interface of the webbrowser is not made for the /page/domain setup
+     * cybernode uses here.
+     * So getBase needs to check multiple cases.
+     * 
+     * @param domain the first path after the /page
+     * @param url the full url to convert
+     * @returns a path that should be available in the storage
+     */
+    getBase(domain: string, url: string): string {
+        if (url.startsWith(this.basePage + domain)) {
+            return url.replace(this.basePage, "");
+        }
+        if (url.startsWith(this.basePage)) {
+            return url.replace(this.basePage, domain + "/");
+        }
+        if (url.startsWith(this.base)){
+            return url.replace(this.base, `${domain}/`)
+        }
+        return url;
+    }
 
     async convert(url: string): Promise<HTMLElement> {
         const parser = new DOMParser();
+        let domain = url.replace(this.base, "").replace(/\/.*/, "");
         const pageHtml = await this.getText(url);
         const docTmp = parser.parseFromString(pageHtml, 'text/html');
 
         const doc = parser.parseFromString("", 'text/html');
-        await this.copyHead(doc.head, docTmp.head.childNodes);
-        await this.copyBody(doc.body, docTmp.body.childNodes);
+        await this.copyHead(domain, doc.head, docTmp.head.childNodes);
+        await this.copyBody(domain, doc.body, docTmp.body.childNodes);
 
         return doc.documentElement;
     }
 
-    async cleanBodyNode(dst: Node, src: Node) {
+    async cleanBodyNode(domain: string, dst: Node, src: Node) {
         switch (src.nodeName) {
             case "IMG":
                 const img = src as HTMLImageElement;
                 if (img.src.startsWith(document.location.origin)) {
-                    const imgSrc = img.src.replace(document.location.origin, "");
+                    const imgSrc = this.getBase(domain, img.src);
                     img.src = "";
                     img.alt = "something";
                     const imgData = await this.getBlob(imgSrc);
@@ -58,7 +87,7 @@ export class PreparePage {
                 break;
             case "A":
                 const a = src as HTMLAnchorElement;
-                if (a.href.startsWith(document.location.origin)) {
+                if (a.href.startsWith(this.base)) {
                     a.setAttribute('onclick', `event.preventDefault(); nextPage('${a.pathname}');`);
                 }
                 break;
@@ -66,41 +95,44 @@ export class PreparePage {
         dst.appendChild(src);
     }
 
-    async copyBody(dst: Node, src: NodeListOf<Node>) {
+    async copyBody(domain: string, dst: Node, src: NodeListOf<Node>) {
         for (let i = 0; i < src.length; i++) {
             const c = src[i];
-            await this.cleanBodyNode(dst, c.cloneNode(false));
+            await this.cleanBodyNode(domain, dst, c.cloneNode(false));
             if (c.childNodes.length > 0) {
-                await this.copyBody(dst.lastChild!, c.childNodes);
+                await this.copyBody(domain, dst.lastChild!, c.childNodes);
             }
         }
     }
 
-    async cleanHeadNode(dst: Node, src: Node) {
+    async cleanHeadNode(domain: string, dst: Node, src: Node) {
         if (src.nodeName === "LINK") {
             const link = src as HTMLLinkElement;
             if (link.rel === "stylesheet") {
-                const cssText = await (await fetch(link.href)).text();
+                console.log(`base: ${link.baseURI}, href: ${link.href}`);
+                const cssText = await this.getText(this.getBase(domain, link.href));
                 const styleElement = document.createElement('style');
                 styleElement.textContent = cssText;
+                styleElement.id = PreparePage.cnhead;
+                const previousStyle = document.getElementById(PreparePage.cnhead);
+                if (previousStyle !== null){
+                    document.head.removeChild(previousStyle);
+                }
                 document.head.appendChild(styleElement);
                 for (let i = 0; i < styleElement.sheet?.cssRules.length!; i++) {
                     const rule = styleElement.sheet!.cssRules[i] as CSSStyleRule;
-                    rule.selectorText = `div#obj ${rule.selectorText}`;
+                    rule.selectorText = `div#${PreparePage.cnbody} ${rule.selectorText}`;
                 }
             }
-        } else {
-            dst.appendChild(src);
         }
-        return true;
     }
 
-    async copyHead(dst: Node, src: NodeListOf<Node>) {
+    async copyHead(domain: string, dst: Node, src: NodeListOf<Node>) {
         for (let i = 0; i < src.length; i++) {
             const c = src[i];
-            await this.cleanHeadNode(dst, c.cloneNode(false));
+            await this.cleanHeadNode(domain, dst, c.cloneNode(false));
             if (c.childNodes.length > 0) {
-                await this.copyHead(dst.lastChild!, c.childNodes);
+                await this.copyHead(domain, dst.lastChild!, c.childNodes);
             }
         }
     }
