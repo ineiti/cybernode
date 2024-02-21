@@ -27,6 +27,7 @@ export function linkToScript(html: string, base: string): string {
 export class PreparePage {
     static cnbody = "cnbody";
     static cnhead = "cnhead";
+    static protoName = "cyno://";
 
     basePage: string = "";
     constructor(private base: string, private getText: (url: string) => Promise<string>,
@@ -44,13 +45,16 @@ export class PreparePage {
      * @returns a path that should be available in the storage
      */
     getBase(domain: string, url: string): string {
+        if (url.startsWith(`${PreparePage.protoName}`)) {
+            return url.replace(PreparePage.protoName, "");
+        }
         if (url.startsWith(this.basePage + domain)) {
             return url.replace(this.basePage, "");
         }
         if (url.startsWith(this.basePage)) {
             return url.replace(this.basePage, domain + "/");
         }
-        if (url.startsWith(this.base)){
+        if (url.startsWith(this.base)) {
             return url.replace(this.base, `${domain}/`)
         }
         return url;
@@ -87,7 +91,7 @@ export class PreparePage {
                 break;
             case "A":
                 const a = src as HTMLAnchorElement;
-                if (a.href.startsWith(this.base)) {
+                if (a.href.startsWith(this.base) || a.href.startsWith(PreparePage.protoName)) {
                     const url = this.getBase(domain, a.href);
                     a.setAttribute('onclick', `event.preventDefault(); nextPage('${url}');`);
                 }
@@ -115,7 +119,7 @@ export class PreparePage {
                 styleElement.textContent = cssText;
                 styleElement.id = PreparePage.cnhead;
                 const previousStyle = document.getElementById(PreparePage.cnhead);
-                if (previousStyle !== null){
+                if (previousStyle !== null) {
                     document.head.removeChild(previousStyle);
                 }
                 document.head.appendChild(styleElement);
