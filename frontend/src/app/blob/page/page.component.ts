@@ -2,7 +2,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Component, Input, NgZone } from '@angular/core';
 import { ConnectorService } from '../../connector.service';
 import { PreparePage } from '../../../lib/convert';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-page',
@@ -15,10 +15,11 @@ export class PageComponent {
   @Input() url = "";
   converter?: PreparePage;
 
-  constructor(private connection: ConnectorService, private router: Router) {
+  constructor(private connection: ConnectorService, private router: Router,
+    private ngZone: NgZone) {
     (window as any)['nextPage'] = (p: string) => this.nextPage(p);
-    this.converter = new PreparePage(document.baseURI, (url: string) => {return this.connection.getPage(url)},
-    (url: string) => {return this.connection.getBlob(url)});
+    this.converter = new PreparePage(document.baseURI, (url: string) => { return this.connection.getPage(url) },
+      (url: string) => { return this.connection.getBlob(url) });
   }
 
   async ngOnChanges() {
@@ -28,6 +29,6 @@ export class PageComponent {
 
   nextPage(page: string) {
     console.log(`Navigating to ${page}`)
-    this.router.navigate([`/page/${page}`]);
+    this.ngZone.run(() => this.router.navigate([`/page/${page}`]));
   }
 }

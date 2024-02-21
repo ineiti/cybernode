@@ -88,7 +88,8 @@ export class PreparePage {
             case "A":
                 const a = src as HTMLAnchorElement;
                 if (a.href.startsWith(this.base)) {
-                    a.setAttribute('onclick', `event.preventDefault(); nextPage('${a.pathname}');`);
+                    const url = this.getBase(domain, a.href);
+                    a.setAttribute('onclick', `event.preventDefault(); nextPage('${url}');`);
                 }
                 break;
         }
@@ -109,7 +110,6 @@ export class PreparePage {
         if (src.nodeName === "LINK") {
             const link = src as HTMLLinkElement;
             if (link.rel === "stylesheet") {
-                console.log(`base: ${link.baseURI}, href: ${link.href}`);
                 const cssText = await this.getText(this.getBase(domain, link.href));
                 const styleElement = document.createElement('style');
                 styleElement.textContent = cssText;
