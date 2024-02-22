@@ -25,7 +25,8 @@ This part should later on be replaced by the actual `fledger`-nodes.
 
 ## Small
 
-- 
+- Connect frontend and backend
+- Add serving pages from backend
 
 ## Medium
 
@@ -35,15 +36,3 @@ This part should later on be replaced by the actual `fledger`-nodes.
 
 - Serve webpages
 - Use actual nodes
-
-# Changelog
-
-2024-01-12
-- Increase / decrease mana with every tick
-  - done, make sure it's all correctly wired up with respect to Alive messages from the 
-  simulator and the web.
-- Replace U256 with NodeID, NodeSecret, and Mana types
-
-2023-12-23
-- Add names to nodes
-- remove `online` field from `Node` - they should be added / removed using the `Trusted`

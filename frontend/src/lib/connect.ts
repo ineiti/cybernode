@@ -1,38 +1,32 @@
-import { NetworkStatus, NodeStatus } from "./structs";
+import { environment } from "../environments/environment";
+import { NodeConnectionBackend } from "./connect.backend";
+import { NodeConnectionMock } from "./connect.mock";
+import { INodeConnection, NetworkStatus, NodeStatus } from "./structs";
 
 export class NodeConnection {
-    constructor(private mana = 0) { }
+    impl?: INodeConnection;
 
-    async getText(path: string): Promise<string> {
-        console.log(`requesting text from ${path}`)
-        await new Promise((res) => setTimeout(res, 100));
-        try {
-            return (await fetch(`/assets/${path}`)).text();
-        } catch (e) {
-            return `<h1>404 Page not found</h1><p>Sorry, don't know page ${path}`;
+    constructor() {
+        if (environment.useBackend) {
+            this.impl = new NodeConnectionBackend();
+        } else {
+            this.impl = new NodeConnectionMock();
         }
     }
 
+    async getText(path: string): Promise<string> {
+        return this.impl!.getText(path);
+    }
+
     async getBlob(path: string): Promise<Blob> {
-        console.log(`requesting blob from ${path}`)
-        await new Promise((res) => setTimeout(res, 100));
-        return (await fetch(`/assets/${path}`)).blob();
+        return this.impl!.getBlob(path);
     }
 
     async getNetworkStatus(): Promise<NetworkStatus> {
-        return new Promise((res) => {
-            let total = Math.floor(Math.random() * 20);
-            setTimeout(() => res({
-                users_total: total,
-                users_active: Math.min(Math.floor(Math.random() * 5), total)
-            }), 500 + Math.random() * 500);
-        })
+        return this.impl!.getNetworkStatus();
     }
 
     async getNodeStatus(): Promise<NodeStatus> {
-        return new Promise((res) => setTimeout(() => res({
-            name: "personal",
-            mana: this.mana++,
-        }), 500 + Math.random() * 500));
+        return this.impl!.getNodeStatus();
     }
 }

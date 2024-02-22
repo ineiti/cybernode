@@ -22,6 +22,17 @@ and retrieve data.
 A blockchain makes sure that the sharing is done in a fair manner and nobody
 profits more than they give.
 
+# Running it
+
+To run CyberNode, please install [devbox](https://www.jetpack.io/devbox).
+Then you can run the following:
+
+```bash
+devbox run localMock
+```
+
+Then you can launch a browser at http://localhost:8000.
+
 ## Roadmap
 
 This is another effort to build such a system - this time called CyberNode.
@@ -108,3 +119,21 @@ Feel free to create PRs to add other such Systems:
 - [Bittorrent](https://en.wikipedia.org/wiki/BitTorrent) - for sharing data in a distributed system
 - [Tor](https://www.torproject.org/) - anonymity online
 - [Veilid](https://veilid.com/) - an Open Source, distributed application framework
+
+# Changelog
+
+2024-02-22 - frontend
+- Fully mocked serving of webpages
+  - rewrite links to local pages to load them in the onepage app
+  - rewrite style-sheets so that they only apply to the page
+  - rewrite references to images so that they are loaded from cybernode
+
+2024-01-12 - backend
+- Increase / decrease mana with every tick
+  - done, make sure it's all correctly wired up with respect to Alive messages from the 
+  simulator and the web.
+- Replace U256 with NodeID, NodeSecret, and Mana types
+
+2023-12-23 - backend
+- Add names to nodes
+- remove `online` field from `Node` - they should be added / removed using the `Trusted`

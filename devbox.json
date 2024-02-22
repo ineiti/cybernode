@@ -7,16 +7,20 @@
     "git@latest",
     "vim@latest",
     "openssh@latest",
-    "less@latest",
+    "less@latest"
   ],
   "shell": {
     "init_hook": [
-      "rustup default stable",
+      "rustup default stable"
     ],
     "scripts": {
       "test": [
-        "cd backend && cargo test",
+        "cd backend && cargo test"
       ],
-    },
-  },
+      "localMock": [
+        "cd frontend && bun install && bun watchMock &",
+        "cd frontend && bun serve.js"
+      ]
+    }
+  }
 }
